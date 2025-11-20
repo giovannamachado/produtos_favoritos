@@ -18,6 +18,11 @@ async def fetch_external_product(product_id: int) -> dict:
             raise HTTPException(
                 status_code=404, detail="Produto não encontrado na API externa")
         r.raise_for_status()
+
+        if not r.text or r.text.strip() == "":
+            raise HTTPException(
+                status_code=404, detail="Produto não encontrado na API externa")
+
         return r.json()
 
 
