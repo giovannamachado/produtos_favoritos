@@ -4,7 +4,7 @@
 Gerenciar clientes e seus produtos favoritos validando contra a FakeStore API.
 
 ## Stack
-- Python, FastAPI
+- Python (>=3.10, <=3.12) + FastAPI
 - PostgreSQL + SQLAlchemy
 - Autenticação JWT (python-jose) + hash de senha (passlib)
 - Cache de produtos local (tabela `products`) com TTL configurável
@@ -42,10 +42,9 @@ Produtos:
 
 ## Execução rápida
 ```bash
-python -m venv .venv
+python3.12 -m venv .venv  # garanta versão suportada
 source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 cp .env.example .env
 uvicorn produtos_favoritos.main:app --reload
 ```
-
