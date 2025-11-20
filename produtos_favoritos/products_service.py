@@ -30,10 +30,18 @@ async def get_or_refresh_product(db: Session, product_id: int) -> Product:
     if product and not ttl_expired(product):
         return product
     data = await fetch_external_product(product_id)
+    rating = data.get("rating")
+    review_text = None
+    if rating:
+        rate = rating.get("rate", 0)
+        count = rating.get("count", 0)
+        review_text = f"Rating: {rate}/5 ({count} reviews)"
+
     if product:
         product.title = data.get("title", product.title)
         product.image = data.get("image", product.image)
         product.price = float(data.get("price", product.price))
+        product.review = review_text
         product.last_sync = datetime.utcnow()
     else:
         product = Product(
@@ -41,7 +49,7 @@ async def get_or_refresh_product(db: Session, product_id: int) -> Product:
             title=data.get("title"),
             image=data.get("image"),
             price=float(data.get("price", 0)),
-            review=None,
+            review=review_text,
             last_sync=datetime.utcnow()
         )
         db.add(product)
