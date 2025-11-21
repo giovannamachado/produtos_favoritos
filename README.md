@@ -28,13 +28,14 @@ cd produtos_favoritos
 
 **2. Crie e ative o ambiente virtual**
 ```bash
-# Linux/Mac
-python3 -m venv .venv
-source .venv/bin/activate
 
 # Windows (PowerShell)
 # Garanta Python 3.12:
 # Se precisar instalar: winget install Python.Python.3.12
+winget install -e --id Python.Python.3.12
+
+# Recrie o ambiente
+Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
 py -3.12 -m venv .venv
 . .\.venv\Scripts\Activate.ps1
 ```
@@ -42,23 +43,11 @@ py -3.12 -m venv .venv
 **3. Instale as dependências**
 ```bash
 python -m pip install --upgrade pip setuptools wheel
-pip cache purge
 pip install -r requirements.txt
 ```
 
 **Nota para Windows:** Caso esteja com Python 3.13+ ou 3.14 e veja erro do `pydantic-core` pedindo Rust/Cargo, recrie o venv com Python 3.12 conforme acima (é o caminho mais simples e rápido).
 
-### Windows Quickstart (PowerShell)
-```powershell
-cd produtos_favoritos
-Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
-winget install -e --id Python.Python.3.12
-py -3.12 -m venv .venv
-. .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip setuptools wheel
-pip cache purge
-pip install -r requirements.txt
-```
 
 **4. Configure as variáveis de ambiente**
 ```bash
@@ -68,7 +57,12 @@ cp .env.example .env
 
 Exemplo de `.env`:
 ```env
-DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/produtos_favoritos
+# Se usar Docker (senha definida no comando run):
+DATABASE_URL=postgresql+psycopg://postgres:suasenha@localhost:5432/produtos_favoritos
+
+# Se usar Postgres Local (senha padrão geralmente é postgres):
+# DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/produtos_favoritos
+
 JWT_SECRET=seu-secret-super-seguro-aqui
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 PRODUCT_CACHE_TTL_HOURS=24
@@ -76,10 +70,16 @@ PRODUCT_CACHE_TTL_HOURS=24
 
 **5. Crie o banco de dados**
 ```bash
-# No PostgreSQL
-createdb produtos_favoritos
+# Escolha uma das opções abaixo:
+# Opção A: Via Docker 
+# 1. Subir o container do Postgres
+docker run --name postgres-local -e POSTGRES_PASSWORD=suasenha -p 5432:5432 -d postgres
 
-# Ou via psql
+# 2. Criar o banco de dados dentro do container
+docker exec -it postgres-local createdb -U postgres produtos_favoritos
+
+#Opção B: Via Instalação Local
+# Via linha de comando psql
 psql -U postgres -c "CREATE DATABASE produtos_favoritos;"
 ```
 
@@ -102,7 +102,7 @@ pytest --cov=produtos_favoritos --cov-report=html
 Escolhi FastAPI pela performance (é assíncrono de verdade) e pela documentação automática via OpenAPI. Além disso, a validação de dados com Pydantic economiza muito tempo e evita bugs bobos.
 
 ### Sistema de Cache
-Um dos pontos que mais me orgulho: implementei um cache local dos produtos da API externa.
+implementei um cache local dos produtos da API externa.
 
 **O problema:** Toda vez que alguém lista favoritos, precisaria buscar dados de N produtos na API externa. Isso é lento e pode sobrecarregar a API.
 
@@ -116,8 +116,8 @@ if product and not ttl_expired(product):
 
 **JWT (JSON Web Tokens):** Stateless, escalável, funciona bem em arquiteturas distribuídas. O token carrega as informações do usuário e expira após 60 minutos (configurável).
 
-**Bcrypt para senhas:** Nunca salvo senha em texto plano. Bcrypt é lento de propósito (dificulta ataques de força bruta) e adiciona salt automático.
-**Sistema de Roles:** Separei usuários comuns de admins. Usuários só mexem nos próprios favoritos, admins podem gerenciar todos os clientes. Simples e efetivo.
+**Bcrypt para senhas:** Salva senha em texto plano. Bcrypt é lento de propósito (dificulta ataques de força bruta) e adiciona salt automático.
+**Sistema de Roles:** Separa usuários comuns de admins. Usuários só mexem nos próprios favoritos, admins podem gerenciar todos os clientes. Simples e efetivo.
 
 - `*_service.py` → Lógica de negócio
 
