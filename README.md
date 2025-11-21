@@ -92,6 +92,7 @@ uvicorn produtos_favoritos.main:app --reload
 - ReDoc: `http://localhost:8000/redoc`
 
 ```bash
+#Rodar testes
 pytest --cov=produtos_favoritos --cov-report=html
 
 ```
@@ -102,13 +103,6 @@ Escolhi FastAPI pela performance e pela documentação automática via OpenAPI. 
 implementei um cache local dos produtos da API externa.
 
 **O problema:** Toda vez que alguém lista favoritos, precisaria buscar dados de N produtos na API externa. Isso é lento e pode sobrecarregar a API.
-
-## Exemplo simplificado
-if product and not ttl_expired(product):
-    return product  # Retorna do cache - super rápido!
-Senão, busca na API externa e atualiza o cache
-```
-```
 
 ### Autenticação e Autorização
 
