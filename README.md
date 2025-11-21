@@ -34,7 +34,8 @@ cd produtos_favoritos
 # Se precisar instalar: winget install Python.Python.3.12
 winget install -e --id Python.Python.3.12
 
-# Recrie o ambiente
+
+# Se já tiver o Python.3.12 instalado, pule para essa etapa e recrie o ambiente (Remove ambiente antigo (se existir) para garantir uma instalação limpa)
 Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
 py -3.12 -m venv .venv
 . .\.venv\Scripts\Activate.ps1
@@ -57,12 +58,7 @@ cp .env.example .env
 
 Exemplo de `.env`:
 ```env
-# Se usar Docker (senha definida no comando run):
-DATABASE_URL=postgresql+psycopg://postgres:suasenha@localhost:5432/produtos_favoritos
-
-# Se usar Postgres Local (senha padrão geralmente é postgres):
-# DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/produtos_favoritos
-
+DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/produtos_favoritos
 JWT_SECRET=seu-secret-super-seguro-aqui
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 PRODUCT_CACHE_TTL_HOURS=24
@@ -71,9 +67,10 @@ PRODUCT_CACHE_TTL_HOURS=24
 **5. Crie o banco de dados**
 ```bash
 # Escolha uma das opções abaixo:
-# Opção A: Via Docker 
+# Opção A: Via Docker (necessário ter o docker desktop instalado)
 # 1. Subir o container do Postgres
-docker run --name postgres-local -e POSTGRES_PASSWORD=suasenha -p 5432:5432 -d postgres
+docker run --name postgres-local -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres
+docker exec -it postgres-local createdb -U postgres produtos_favoritos
 
 # 2. Criar o banco de dados dentro do container
 docker exec -it postgres-local createdb -U postgres produtos_favoritos
