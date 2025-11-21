@@ -96,17 +96,18 @@ pytest --cov=produtos_favoritos --cov-report=html
 
 ```
 ---
-Escolhi FastAPI pela performance (é assíncrono de verdade) e pela documentação automática via OpenAPI. Além disso, a validação de dados com Pydantic economiza muito tempo e evita bugs bobos.
+Escolhi FastAPI pela performance e pela documentação automática via OpenAPI. Além disso, a validação de dados com Pydantic economiza muito tempo e evita bugs.
 
 ### Sistema de Cache
 implementei um cache local dos produtos da API externa.
 
 **O problema:** Toda vez que alguém lista favoritos, precisaria buscar dados de N produtos na API externa. Isso é lento e pode sobrecarregar a API.
 
-# Exemplo simplificado
+## Exemplo simplificado
 if product and not ttl_expired(product):
     return product  # Retorna do cache - super rápido!
-# Senão, busca na API externa e atualiza o cache
+Senão, busca na API externa e atualiza o cache
+```
 ```
 
 ### Autenticação e Autorização
