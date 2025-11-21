@@ -97,7 +97,7 @@ uvicorn produtos_favoritos.main:app --reload
 ```bash
 pytest --cov=produtos_favoritos --cov-report=html
 
-
+```
 ---
 Escolhi FastAPI pela performance (é assíncrono de verdade) e pela documentação automática via OpenAPI. Além disso, a validação de dados com Pydantic economiza muito tempo e evita bugs bobos.
 
