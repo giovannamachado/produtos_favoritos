@@ -14,7 +14,7 @@ Uma API REST para gerenciar clientes e seus produtos favoritos, integrando com a
 
 ### Pré-requisitos
 
-- Python 3.10, 3.11 ou 3.12
+- Python 3.10, 3.11 ou 3.12 (no Windows, use 3.12)
 - PostgreSQL rodando
 - Git
 
@@ -23,7 +23,7 @@ Uma API REST para gerenciar clientes e seus produtos favoritos, integrando com a
 **1. Clone o repositório**
 ```bash
 git clone git@github.com:giovannamachado/produtos_favoritos.git
-cd produtos-favoritos
+cd produtos_favoritos
 ```
 
 **2. Crie e ative o ambiente virtual**
@@ -33,12 +33,30 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 # Windows (PowerShell)
-python -m venv .venv
-.venv\Scripts\Activate.ps1
+# Garanta Python 3.12:
+# Se precisar instalar: winget install Python.Python.3.12
+py -3.12 -m venv .venv
+. .\.venv\Scripts\Activate.ps1
 ```
 
 **3. Instale as dependências**
 ```bash
+python -m pip install --upgrade pip setuptools wheel
+pip cache purge
+pip install -r requirements.txt
+```
+
+**Nota para Windows:** Caso esteja com Python 3.13+ ou 3.14 e veja erro do `pydantic-core` pedindo Rust/Cargo, recrie o venv com Python 3.12 conforme acima (é o caminho mais simples e rápido).
+
+### Windows Quickstart (PowerShell)
+```powershell
+cd produtos_favoritos
+Remove-Item -Recurse -Force .venv -ErrorAction SilentlyContinue
+winget install -e --id Python.Python.3.12
+py -3.12 -m venv .venv
+. .\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip setuptools wheel
+pip cache purge
 pip install -r requirements.txt
 ```
 
@@ -69,56 +87,25 @@ psql -U postgres -c "CREATE DATABASE produtos_favoritos;"
 ```bash
 python seeds_create_admin.py "Admin" "admin@email.com" "senha123"
 ```
-
 **7. Inicie o servidor**
 ```bash
 uvicorn produtos_favoritos.main:app --reload
 ```
-
-Pronto! A API estará rodando em `http://localhost:8000` 🎉
-
-**8. Acesse a documentação interativa**
-
-Abra seu navegador em:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
 
----
-
-## 🧪 Rodando os Testes
-
 ```bash
-# Todos os testes
-pytest -v
-
-# Com relatório de cobertura
 pytest --cov=produtos_favoritos --cov-report=html
 
-# Teste específico
-pytest tests/test_auth.py -v
-```
 
 ---
-
-## 🏗️ Arquitetura e Escolhas Técnicas
-
-### Por que FastAPI?
-
 Escolhi FastAPI pela performance (é assíncrono de verdade) e pela documentação automática via OpenAPI. Além disso, a validação de dados com Pydantic economiza muito tempo e evita bugs bobos.
 
-### Por que PostgreSQL?
-
-Preciso de constraints robustas (email único, favoritos não duplicados) e relacionamentos bem definidos. PostgreSQL entrega isso com excelência, além de ser amplamente usado em produção.
-
 ### Sistema de Cache
-
 Um dos pontos que mais me orgulho: implementei um cache local dos produtos da API externa.
 
 **O problema:** Toda vez que alguém lista favoritos, precisaria buscar dados de N produtos na API externa. Isso é lento e pode sobrecarregar a API.
 
-**A solução:** Salvo os produtos localmente com um TTL (Time To Live) de 24h. Se o produto já está no cache e não expirou, retorno direto do banco. Se expirou, atualizo em background. Resultado? Resposta instantânea para o usuário.
-
-```python
 # Exemplo simplificado
 if product and not ttl_expired(product):
     return product  # Retorna do cache - super rápido!
@@ -130,52 +117,26 @@ if product and not ttl_expired(product):
 **JWT (JSON Web Tokens):** Stateless, escalável, funciona bem em arquiteturas distribuídas. O token carrega as informações do usuário e expira após 60 minutos (configurável).
 
 **Bcrypt para senhas:** Nunca salvo senha em texto plano. Bcrypt é lento de propósito (dificulta ataques de força bruta) e adiciona salt automático.
-
 **Sistema de Roles:** Separei usuários comuns de admins. Usuários só mexem nos próprios favoritos, admins podem gerenciar todos os clientes. Simples e efetivo.
 
-### Estrutura de Código
-
-Organizei tudo em módulos claros:
-- `routers_*.py` → Endpoints (camada HTTP)
-- `models.py` → Modelos do banco (ORM)
-- `schemas.py` → Validação de entrada/saída (Pydantic)
 - `*_service.py` → Lógica de negócio
-- `deps.py` → Injeção de dependências (auth, db)
 
 Isso facilita manutenção e testes. Se amanhã eu precisar trocar o banco ou adicionar Redis, consigo fazer com mudanças mínimas.
 
----
-
-## 📊 Modelos de Dados
-
-### Client (Cliente)
 ```python
 id: int (PK)
-name: str
-email: str (único)
-password_hash: str
 role: str ('user' ou 'admin')
-created_at: datetime
 ```
 
-### Product (Produto - Cache local)
-```python
 id: int (PK, mesmo ID da API externa)
-title: str
 image: str (URL)
 price: float
 review: str (ex: "Rating: 4.5/5 (120 reviews)")
 last_sync: datetime (para controle do TTL)
-```
 
 ### Favorite (Favorito)
 ```python
 id: int (PK)
-client_id: int (FK → Client)
-product_id: int (FK → Product)
-created_at: datetime
-
-# Constraint único em (client_id, product_id)
 # Garante que um cliente não favoritará o mesmo produto 2x
 ```
 
